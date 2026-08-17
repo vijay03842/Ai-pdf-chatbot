@@ -2,7 +2,7 @@ from fastapi import FastAPI, UploadFile, File, Query
 from fastapi.middleware.cors import CORSMiddleware
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEndpointEmbeddings   # 👈 changed
+from langchain_huggingface import HuggingFaceEndpointEmbeddings   
 from langchain_chroma import Chroma
 import os
 from dotenv import load_dotenv
