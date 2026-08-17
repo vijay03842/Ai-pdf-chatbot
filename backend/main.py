@@ -38,9 +38,17 @@ llm = ChatOpenAI(
     base_url="https://openrouter.ai/api/v1",
       
 )
-embedding = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
-)
+embedding = None
+
+def get_embedding():
+    global embedding
+
+    if embedding is None:
+        embedding = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        )
+
+    return embedding
 
 
 @app.get("/")
@@ -77,7 +85,7 @@ async def upload_pdf(file:UploadFile = File(...)):
 
     vector_store = Chroma.from_documents(
         documents= chunks,
-        embedding = embedding,
+        embedding = get_embedding(),
         persist_directory=os.path.join(
             CHROMA_FOLDER,
             file_id
@@ -103,7 +111,7 @@ def chat(
 
     vector_store = Chroma(
         persist_directory=chroma_path,
-        embedding_function=embedding
+        embedding_function=get_embedding()
     )
 
     retriever = vector_store.as_retriever(
