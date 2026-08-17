@@ -1,11 +1,9 @@
-from fastapi import FastAPI,UploadFile,File
-
+from fastapi import FastAPI, UploadFile, File, Query
 from fastapi.middleware.cors import CORSMiddleware
-from langchain_community.document_loaders import  PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEndpointEmbeddings   # 👈 changed
 from langchain_chroma import Chroma
-from fastapi import Query
 import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
@@ -13,117 +11,88 @@ import uuid
 import shutil
 
 load_dotenv()
-app=FastAPI()
+app = FastAPI()
 
-# allow react app
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173"    
-    ],
-     allow_credentials=True,#here incase login to allow for credentia
-    allow_methods=["*"],#here allow all methods like get put delete post ,*=>means all methods and tokens
-    allow_headers=["*"]#incae=se tokkent can pass in header like bearer token mern stack concept 
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
-UPLOAD_FOLDER="uploads"
-CHROMA_FOLDER="chroma_db"
+UPLOAD_FOLDER = "uploads"
+CHROMA_FOLDER = "chroma_db"
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(CHROMA_FOLDER, exist_ok=True)
 
 llm = ChatOpenAI(
     model="cohere/north-mini-code:free",
-    api_key = os.getenv("OPENAI_API_KEY"),
+    api_key=os.getenv("OPENAI_API_KEY"),
     base_url="https://openrouter.ai/api/v1",
-      
 )
+
 embedding = None
 
 def get_embedding():
     global embedding
-
     if embedding is None:
-        embedding = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        embedding = HuggingFaceEndpointEmbeddings(          # 👈 changed
+            model="sentence-transformers/all-MiniLM-L6-v2",
+            huggingfacehub_api_token=os.getenv("HUGGINGFACEHUB_API_TOKEN"),
         )
-
     return embedding
 
 
 @app.get("/")
 def home():
-    return{
-        "message":"This is rag chatbot"
-    }
+    return {"message": "This is rag chatbot"}
+
 
 @app.post("/upload")
-async def upload_pdf(file:UploadFile = File(...)):
+async def upload_pdf(file: UploadFile = File(...)):
     if not file.filename.endswith(".pdf"):
-        return {"Error":"please upload a PDF file"}
-    
-    file_id = str(uuid.uuid4())
+        return {"Error": "please upload a PDF file"}
 
-    pdf_path = os.path.join(
-        UPLOAD_FOLDER,
-        f"{file_id}.pdf"
-    )
+    file_id = str(uuid.uuid4())
+    pdf_path = os.path.join(UPLOAD_FOLDER, f"{file_id}.pdf")
 
     with open(pdf_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
     loader = PyPDFLoader(pdf_path)
-
     documents = loader.load()
 
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=200,
-        chunk_overlap=50
-    )
-
+    splitter = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=50)
     chunks = splitter.split_documents(documents)
 
     vector_store = Chroma.from_documents(
-        documents= chunks,
-        embedding = get_embedding(),
-        persist_directory=os.path.join(
-            CHROMA_FOLDER,
-            file_id
-        )
-    )   
+        documents=chunks,
+        embedding=get_embedding(),
+        persist_directory=os.path.join(CHROMA_FOLDER, file_id)
+    )
 
-    return{
-        "message":"PDF uploded successfully",
-        "file_id":file_id,
-        "chunks":len(chunks)
+    return {
+        "message": "PDF uploded successfully",
+        "file_id": file_id,
+        "chunks": len(chunks)
     }
 
-@app.get("/chat")
-def chat(
-    file_id: str = Query(...),
-    question: str = Query(...)
-):
 
-    chroma_path = os.path.join(
-        CHROMA_FOLDER,
-        file_id
-    )
+@app.get("/chat")
+def chat(file_id: str = Query(...), question: str = Query(...)):
+    chroma_path = os.path.join(CHROMA_FOLDER, file_id)
 
     vector_store = Chroma(
         persist_directory=chroma_path,
         embedding_function=get_embedding()
     )
 
-    retriever = vector_store.as_retriever(
-        search_kwargs={"k": 4}
-    )
-
+    retriever = vector_store.as_retriever(search_kwargs={"k": 4})
     results = retriever.invoke(question)
 
-    context = "\n\n".join(
-        document.page_content
-        for document in results
-    )
+    context = "\n\n".join(document.page_content for document in results)
 
     prompt = f"""
 You are a helpful AI assistant.
@@ -147,22 +116,3 @@ Question:
         "question": question,
         "answer": response.content
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
