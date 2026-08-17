@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  background-color: #212121; /* ChatGPT main workspace background */
+  color: #ececec;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Simple flat borders and elements */
+.chatgpt-sidebar {
+  background-color: #171717; /* ChatGPT dark sidebar */
+}
+
+.chatgpt-input-container {
+  background-color: #2f2f2f;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.chatgpt-user-bubble {
+  background-color: #2f2f2f;
+}
+
+/* Typing indicator simplified */
+.typing-dot {
+  animation: typing-bounce 1.4s infinite ease-in-out both;
+  background-color: #8e8e8f;
+}
+
+.typing-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes typing-bounce {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+/* Markdown Specifics */
+.markdown-content {
+  line-height: 1.6;
+}
+
+.markdown-content p {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-content p:first-child {
+  margin-top: 0;
+}
+
+.markdown-content p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content code {
+  font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
